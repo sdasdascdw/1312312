@@ -404,19 +404,23 @@ function Window:CreateTab(name)
     Animations.Hover(btn, theme.PanelLight, theme.Border)
 
     -- Sections lay out horizontally, side by side, like the reference image
-    local page = Create("Frame", {
-        Parent = windowSelf.ContentArea,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Visible = false,
-    }, {
-        Create("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            Padding = UDim.new(0, 10),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            VerticalAlignment = Enum.VerticalAlignment.Top,
-        }),
-    })
+local page = Create("Frame", {
+    Parent = windowSelf.ContentArea,
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 1, 0),
+    Visible = false,
+}, {
+    Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        Padding = UDim.new(0, 10),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        VerticalAlignment = Enum.VerticalAlignment.Top,
+    }),
+    Create("UIPadding", {
+        PaddingLeft = UDim.new(0, 4),
+        PaddingRight = UDim.new(0, 4),
+    }),
+})
 
     tabObj.Button = btn
     tabObj.Page = page
@@ -1126,7 +1130,7 @@ function Tab:CreateTabIntoTab(name)
     -- tab strip (mirrors the reference image's "Tab Into Tab / Tab 1" pill),
     -- which reveals a horizontal sub-tab strip + sections when active.
     local holderRow = Create("Frame", {
-        Parent = windowSelf.Main,
+        Parent = windowSelf.ContentArea,
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(10, 44),
         Size = UDim2.new(1, -20, 0, 0),
@@ -1153,6 +1157,7 @@ function Tab:CreateTabIntoTab(name)
     })
 
     local function addSubTab(subName)
+        subTabObj.CreateSection = Tab.CreateSection
         local order = #nested.SubTabs + 1
 
         local btn = Create("TextButton", {
@@ -1180,7 +1185,10 @@ function Tab:CreateTabIntoTab(name)
         })
 
         local subTabObj = { Name = subName, Button = btn, Page = subPage, Sections = {} }
-        subTabObj.CreateSection = Tab.CreateSection -- reuse the same bordered-box section renderer
+        setmetatable(subTabObj, Tab)
+
+subTabObj.Window = windowSelf
+subTabObj.Page = subPage -- reuse the same bordered-box section renderer
 
         btn.MouseButton1Click:Connect(function()
             for _, st in ipairs(nested.SubTabs) do st.Page.Visible = false end
